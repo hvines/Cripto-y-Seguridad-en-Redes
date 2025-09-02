@@ -1,3 +1,5 @@
+import sys
+
 def cifrar_cesar(texto, desplazamiento):
     """
     Cifra un texto utilizando el algoritmo César.
@@ -59,60 +61,25 @@ def descifrar_cesar(texto_cifrado, desplazamiento):
 
 def main():
     """
-    Función principal para probar el algoritmo César.
+    Función principal para usar desde línea de comandos.
+    Uso: python cesar.py "texto" desplazamiento
     """
-    print("=== Algoritmo de Cifrado César ===\n")
+    if len(sys.argv) != 3:
+        print("Uso: python cesar.py \"texto\" desplazamiento")
+        return
     
-    # Ejemplos de prueba
-    ejemplos = [
-        ("HOLA MUNDO", 3),
-        ("PYTHON ES GENIAL", 5),
-        ("ABC XYZ 123", 1),
-        ("TEXTO CON SIMBOLOS!", 10),
-        ("CORRIMIENTO MAYOR", 30)  # Para probar módulo 26
-    ]
-    
-    for texto, desplazamiento in ejemplos:
-        print(f"Texto original: '{texto}'")
-        print(f"Desplazamiento: {desplazamiento}")
-        
-        texto_cifrado = cifrar_cesar(texto, desplazamiento)
-        print(f"Texto cifrado: '{texto_cifrado}'")
-        
-        texto_descifrado = descifrar_cesar(texto_cifrado, desplazamiento)
-        print(f"Texto descifrado: '{texto_descifrado}'")
-        
-        # Verificar que el descifrado es correcto
-        if texto == texto_descifrado:
-            print("✓ Verificación exitosa")
-        else:
-            print("✗ Error en la verificación")
-        
-        print("-" * 50)
-    
-    # Modo interactivo
-    print("\n=== Modo Interactivo ===")
+    texto = sys.argv[1]
     try:
-        while True:
-            texto = input("\nIngrese el texto a cifrar (o 'salir' para terminar): ")
-            if texto.lower() == 'salir':
-                break
-            
-            desplazamiento = int(input("Ingrese el desplazamiento: "))
-            
-            texto_cifrado = cifrar_cesar(texto, desplazamiento)
-            print(f"Texto cifrado: '{texto_cifrado}'")
-            
-            # Opción para descifrar
-            opcion = input("¿Desea descifrar el texto? (s/n): ")
-            if opcion.lower() == 's':
-                texto_descifrado = descifrar_cesar(texto_cifrado, desplazamiento)
-                print(f"Texto descifrado: '{texto_descifrado}'")
-    
-    except KeyboardInterrupt:
-        print("\n\nPrograma terminado por el usuario.")
+        desplazamiento = int(sys.argv[2])
     except ValueError:
         print("Error: El desplazamiento debe ser un número entero.")
+        return
+    
+    texto_cifrado = cifrar_cesar(texto, desplazamiento)
+    print(f"Texto cifrado: '{texto_cifrado}'")
+    
+    texto_descifrado = descifrar_cesar(texto_cifrado, desplazamiento)
+    print(f"Texto descifrado: '{texto_descifrado}'")
 
 
 if __name__ == "__main__":
