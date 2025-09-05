@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import os
 import sys
 import time
@@ -41,16 +44,16 @@ def build_payload(char_byte: int) -> bytes:
     """
     Data (56 bytes totales):
       0..7   : timestamp Unix en nanosegundos (uint64, big-endian)
-      8      : carácter (1 byte) — un carácter por paquete
-      9..15  : 7 bytes en cero
-      16..55 : bytes crecientes 0x10 .. 0x37 (40 bytes)
+      8..15  : 8 bytes en cero
+      16..54 : bytes crecientes 0x10 .. 0x36 (39 bytes)
+      55     : carácter (1 byte) — último byte del contador
     """
     ts_ns = time.time_ns()
     part_ts = struct.pack("!Q", ts_ns)               # 8 bytes
-    part_char = struct.pack("!B", char_byte & 0xFF)  # 1 byte
-    part_zeros = b"\x00" * 7                         # 7 bytes
-    part_counter = bytes(range(0x10, 0x38))          # 0x10..0x37 (40 bytes)
-    payload = part_ts + part_char + part_zeros + part_counter
+    part_zeros = b"\x00" * 8                         # 8 bytes
+    part_counter = bytes(range(0x10, 0x37))          # 0x10..0x36 (39 bytes)
+    part_char = struct.pack("!B", char_byte & 0xFF)  # 1 byte (carácter)
+    payload = part_ts + part_zeros + part_counter + part_char
     assert len(payload) == 56
     return payload
 
