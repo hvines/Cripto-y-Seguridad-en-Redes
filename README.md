@@ -1,7 +1,9 @@
 # Cripto-y-Seguridad-en-Redes
 Laboratorios
 
-python cesar.py "<texto a cifrar>" <número de corrimiento>
 
+Lab 1
+python cesar.py "<texto a cifrar>" <número de corrimiento>
+sudo ./ping "<texto a enviar>"
 
 

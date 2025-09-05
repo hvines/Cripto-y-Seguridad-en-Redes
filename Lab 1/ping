@@ -1,0 +1,103 @@
+import os
+import sys
+import time
+import struct
+import socket
+from pathlib import Path
+
+DEST_IP = "8.8.8.8"
+ID_FILE = Path("/tmp/ping_identifier.counter")
+
+ICMP_ECHO_REQUEST = 8
+ICMP_CODE = 0
+
+def next_identifier() -> int:
+    """Identifier secuencial por ejecución, comenzando en 1, persistido."""
+    try:
+        last = int(ID_FILE.read_text().strip())
+    except Exception:
+        last = 0
+    ident = (last % 0xFFFF) + 1
+    try:
+        ID_FILE.write_text(str(ident))
+    except Exception:
+        pass
+    return ident
+
+def checksum(data: bytes) -> int:
+    """RFC 1071 — checksum de 16 bits a 1’s complement sobre header+data."""
+    if len(data) % 2 == 1:
+        data += b"\x00"
+    s = 0
+    for i in range(0, len(data), 2):
+        w = (data[i] << 8) + data[i+1]
+        s = (s + w) & 0xFFFFFFFF
+    # fold 32->16
+    s = (s >> 16) + (s & 0xFFFF)
+    s = (s >> 16) + (s & 0xFFFF)
+    return (~s) & 0xFFFF
+
+def build_payload(char_byte: int) -> bytes:
+    """
+    Data (56 bytes totales):
+      0..7   : timestamp Unix en nanosegundos (uint64, big-endian)
+      8      : carácter (1 byte) — un carácter por paquete
+      9..15  : 7 bytes en cero
+      16..55 : bytes crecientes 0x10 .. 0x37 (40 bytes)
+    """
+    ts_ns = time.time_ns()
+    part_ts = struct.pack("!Q", ts_ns)               # 8 bytes
+    part_char = struct.pack("!B", char_byte & 0xFF)  # 1 byte
+    part_zeros = b"\x00" * 7                         # 7 bytes
+    part_counter = bytes(range(0x10, 0x38))          # 0x10..0x37 (40 bytes)
+    payload = part_ts + part_char + part_zeros + part_counter
+    assert len(payload) == 56
+    return payload
+
+def build_packet(ident: int, seq: int, payload: bytes) -> bytes:
+    # Header con checksum=0 para el cálculo
+    header = struct.pack("!BBHHH", ICMP_ECHO_REQUEST, ICMP_CODE, 0, ident & 0xFFFF, seq & 0xFFFF)
+    cs = checksum(header + payload)
+    # Header definitivo con checksum correcto
+    header = struct.pack("!BBHHH", ICMP_ECHO_REQUEST, ICMP_CODE, cs, ident & 0xFFFF, seq & 0xFFFF)
+    return header + payload
+
+def main():
+    if len(sys.argv) < 2:
+        print('Uso: sudo ./ping "cadena de texto"')
+        sys.exit(1)
+
+    text = sys.argv[1]
+    chars = [ord(c) & 0xFF for c in text]
+
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
+        sock.settimeout(1)
+        print(f"Socket created successfully. Sending to {DEST_IP}")
+    except PermissionError:
+        print("Error: Se requieren permisos de root. Usa 'sudo ./ping \"texto\"'")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error creating socket: {e}")
+        sys.exit(1)
+
+    ident = next_identifier()
+    seq = 1
+
+    for b in chars:
+        try:
+            payload = build_payload(b)
+            packet = build_packet(ident, seq, payload)
+            bytes_sent = sock.sendto(packet, (DEST_IP, 0))
+            print(f"Sent 1 packets. (char: {chr(b)}, bytes: {bytes_sent})")
+            print(".")
+            seq += 1
+            time.sleep(0.05)
+        except Exception as e:
+            print(f"Error sending packet for char '{chr(b)}': {e}")
+
+    sock.close()
+    print(f"Total packets sent: {len(chars)}")
+
+if __name__ == "__main__":
+    main()
