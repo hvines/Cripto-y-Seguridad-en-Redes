@@ -16,9 +16,6 @@ def cifrar_cesar(texto, desplazamiento):
     
     return texto_cifrado
 
-def descifrar_cesar(texto_cifrado, desplazamiento):
-    return cifrar_cesar(texto_cifrado, -desplazamiento)
-
 def main():
     if len(sys.argv) != 3:
         print("Uso: python cesar.py \"texto\" desplazamiento")
