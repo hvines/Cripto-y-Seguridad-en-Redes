@@ -42,19 +42,19 @@ def checksum(data: bytes) -> int:
 
 def build_payload(char_byte: int) -> bytes:
     """
-    Data (56 bytes totales):
+    Data (57 bytes totales):
       0..7   : timestamp Unix en nanosegundos (uint64, big-endian)
       8..15  : 8 bytes en cero
-      16..54 : bytes crecientes 0x10 .. 0x36 (39 bytes)
-      55     : carácter (1 byte) — último byte del contador
+      16..55 : bytes crecientes 0x10 .. 0x37 (40 bytes)
+      56     : carácter (1 byte) — último byte del contador
     """
     ts_ns = time.time_ns()
     part_ts = struct.pack("!Q", ts_ns)               # 8 bytes
     part_zeros = b"\x00" * 8                         # 8 bytes
-    part_counter = bytes(range(0x10, 0x37))          # 0x10..0x36 (39 bytes)
+    part_counter = bytes(range(0x10, 0x38))          # 0x10..0x37 (40 bytes)
     part_char = struct.pack("!B", char_byte & 0xFF)  # 1 byte (carácter)
     payload = part_ts + part_zeros + part_counter + part_char
-    assert len(payload) == 56
+    assert len(payload) == 57
     return payload
 
 def build_packet(ident: int, seq: int, payload: bytes) -> bytes:
